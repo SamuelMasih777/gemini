@@ -28,6 +28,15 @@ interface CountrySelectorProps {
   onSelect: (country: Country) => void;
   placeholder?: string;
 }
+interface RestCountry {
+  name: { common: string };
+  cca2: string;
+  idd?: {
+    root?: string;
+    suffixes?: string[];
+  };
+  flag: string;
+}
 
 export function CountrySelector({ value, onSelect, placeholder = "Select country..." }: CountrySelectorProps) {
   const [open, setOpen] = useState(false);
@@ -38,17 +47,17 @@ export function CountrySelector({ value, onSelect, placeholder = "Select country
     const fetchCountries = async () => {
       try {
         const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,idd,flag');
-        const data = await response.json();
-        
+        const data = (await response.json()) as RestCountry[];
+
         const formattedCountries: Country[] = data
-          .filter((country: any) => country.idd?.root && country.idd?.suffixes?.[0])
-          .map((country: any) => ({
+          .filter((country) => country.idd?.root && country.idd?.suffixes?.[0])
+          .map((country) => ({
             name: country.name.common,
             code: country.cca2,
-            dialCode: `${country.idd.root}${country.idd.suffixes[0]}`,
+            dialCode: `${country.idd!.root}${country.idd!.suffixes![0]}`,
             flag: country.flag,
           }))
-          .sort((a: Country, b: Country) => a.name.localeCompare(b.name));
+          .sort((a, b) => a.name.localeCompare(b.name));
         
         setCountries(formattedCountries);
       } catch (error) {
