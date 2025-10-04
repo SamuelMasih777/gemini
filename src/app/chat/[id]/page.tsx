@@ -32,15 +32,28 @@ export default function ChatPage({ params }: ChatPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
-  const { chatrooms, messages, addMessage, addAiMessage, setTyping, isTyping, deleteChatroom, loadMoreMessages } = useChatStore();
+  const { 
+    chatrooms, 
+    addMessage, 
+    addAiMessage, 
+    setTyping, 
+    isTyping, 
+    deleteChatroom,
+    getPaginatedMessages,
+    getTotalPages,
+    getCurrentPage,
+    setPage,
+    loadMoreMessages
+  } = useChatStore();
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const lastMessageCountRef = useRef(0);
 
   const chatroom = chatrooms.find((c) => c.id === id);
-  const chatroomMessages = messages[id] || [];
+  const paginatedMessages = getPaginatedMessages(id);
+  const totalPages = getTotalPages(id);
+  const currentPage = getCurrentPage(id);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,11 +66,8 @@ export default function ChatPage({ params }: ChatPageProps) {
   }, [isAuthenticated, chatroom, router]);
 
   useEffect(() => {
-    if (chatroomMessages.length > lastMessageCountRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-    lastMessageCountRef.current = chatroomMessages.length;
-  }, [chatroomMessages.length]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [currentPage]);
 
   const handleSendMessage = (content: string, image?: string) => {
     addMessage(id, content, image);
@@ -85,6 +95,18 @@ export default function ChatPage({ params }: ChatPageProps) {
       description: `"${chatroom?.title}" has been deleted.`,
     });
     router.push("/dashboard");
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setPage(id, currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setPage(id, currentPage + 1);
+    }
   };
 
   const handleScroll = () => {
@@ -158,12 +180,12 @@ export default function ChatPage({ params }: ChatPageProps) {
         </div>
       </div>
 
-      <div
+      <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
-        {hasMore && chatroomMessages.length > 0 && (
+        {hasMore && paginatedMessages.length > 0 && currentPage === 1 && (
           <div className="text-center">
             <Button variant="ghost" size="sm" onClick={() => loadMoreMessages(id)}>
               Load more messages
@@ -171,7 +193,7 @@ export default function ChatPage({ params }: ChatPageProps) {
           </div>
         )}
         
-        {chatroomMessages.length === 0 ? (
+        {paginatedMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
               <p className="text-lg mb-2">No messages yet</p>
@@ -179,14 +201,39 @@ export default function ChatPage({ params }: ChatPageProps) {
             </div>
           </div>
         ) : (
-          chatroomMessages.map((message) => (
-            <Message key={message.id} message={message} />
-          ))
+          <>
+            {paginatedMessages.map((message) => (
+              <Message key={message.id} message={message} />
+            ))}
+            {isTyping && currentPage === totalPages && <TypingIndicator />}
+            <div ref={messagesEndRef} />
+          </>
         )}
-        
-        {isTyping && <TypingIndicator />}
-        <div ref={messagesEndRef} />
       </div>
+
+      {paginatedMessages.length > 0 && (
+        <div className="border-t bg-card/50 backdrop-blur-sm p-3 flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       <div className="border-t bg-card/50 backdrop-blur-sm p-4">
         <MessageInput onSendMessage={handleSendMessage} disabled={isTyping} />

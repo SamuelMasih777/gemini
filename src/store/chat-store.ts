@@ -24,6 +24,8 @@ export interface ChatState {
   currentChatroomId: string | null;
   isTyping: boolean;
   searchQuery: string;
+  currentPage: Record<string, number>;
+  messagesPerPage: number;
   addChatroom: (title: string) => string;
   deleteChatroom: (id: string) => void;
   setCurrentChatroom: (id: string | null) => void;
@@ -32,6 +34,10 @@ export interface ChatState {
   setTyping: (typing: boolean) => void;
   setSearchQuery: (query: string) => void;
   getFilteredChatrooms: () => Chatroom[];
+  setPage: (chatroomId: string, page: number) => void;
+  getPaginatedMessages: (chatroomId: string) => Message[];
+  getTotalPages: (chatroomId: string) => number;
+  getCurrentPage: (chatroomId: string) => number;
   loadMoreMessages: (chatroomId: string) => void;
 }
 
@@ -43,6 +49,8 @@ export const useChatStore = create<ChatState>()(
       currentChatroomId: null,
       isTyping: false,
       searchQuery: '',
+      currentPage: {},
+      messagesPerPage: 20,
       
       addChatroom: (title: string) => {
         const newChatroom: Chatroom = {
@@ -83,17 +91,26 @@ export const useChatStore = create<ChatState>()(
           chatroomId,
         };
         
-        set((state) => ({
-          messages: {
-            ...state.messages,
-            [chatroomId]: [...(state.messages[chatroomId] || []), message]
-          },
-          chatrooms: state.chatrooms.map(room => 
-            room.id === chatroomId 
-              ? { ...room, lastMessage: image ? '📷 Image' : content, lastMessageAt: message.timestamp }
-              : room
-          )
-        }));
+        set((state) => {
+          const updatedMessages = [...(state.messages[chatroomId] || []), message];
+          const totalPages = Math.ceil(updatedMessages.length / state.messagesPerPage);
+          
+          return {
+            messages: {
+              ...state.messages,
+              [chatroomId]: updatedMessages
+            },
+            chatrooms: state.chatrooms.map(room => 
+              room.id === chatroomId 
+                ? { ...room, lastMessage: image ? '📷 Image' : content, lastMessageAt: message.timestamp }
+                : room
+            ),
+            currentPage: {
+              ...state.currentPage,
+              [chatroomId]: totalPages // Auto-navigate to last page
+            }
+          };
+        });
       },
       
       addAiMessage: (chatroomId: string, content: string) => {
@@ -105,17 +122,26 @@ export const useChatStore = create<ChatState>()(
           chatroomId,
         };
         
-        set((state) => ({
-          messages: {
-            ...state.messages,
-            [chatroomId]: [...(state.messages[chatroomId] || []), message]
-          },
-          chatrooms: state.chatrooms.map(room => 
-            room.id === chatroomId 
-              ? { ...room, lastMessage: content, lastMessageAt: message.timestamp }
-              : room
-          )
-        }));
+        set((state) => {
+          const updatedMessages = [...(state.messages[chatroomId] || []), message];
+          const totalPages = Math.ceil(updatedMessages.length / state.messagesPerPage);
+          
+          return {
+            messages: {
+              ...state.messages,
+              [chatroomId]: updatedMessages
+            },
+            chatrooms: state.chatrooms.map(room => 
+              room.id === chatroomId 
+                ? { ...room, lastMessage: content, lastMessageAt: message.timestamp }
+                : room
+            ),
+            currentPage: {
+              ...state.currentPage,
+              [chatroomId]: totalPages // Auto-navigate to last page
+            }
+          };
+        });
       },
       
       setTyping: (typing: boolean) => set({ isTyping: typing }),
@@ -128,6 +154,36 @@ export const useChatStore = create<ChatState>()(
         return chatrooms.filter(room => 
           room.title.toLowerCase().includes(searchQuery.toLowerCase())
         );
+      },
+      
+      setPage: (chatroomId: string, page: number) => {
+        set((state) => ({
+          currentPage: {
+            ...state.currentPage,
+            [chatroomId]: page
+          }
+        }));
+      },
+      
+      getPaginatedMessages: (chatroomId: string) => {
+        const state = get();
+        const allMessages = state.messages[chatroomId] || [];
+        const currentPage = state.currentPage[chatroomId] || 1;
+        const startIndex = (currentPage - 1) * state.messagesPerPage;
+        const endIndex = startIndex + state.messagesPerPage;
+        
+        return allMessages.slice(startIndex, endIndex);
+      },
+      
+      getTotalPages: (chatroomId: string) => {
+        const state = get();
+        const allMessages = state.messages[chatroomId] || [];
+        return Math.max(1, Math.ceil(allMessages.length / state.messagesPerPage));
+      },
+      
+      getCurrentPage: (chatroomId: string) => {
+        const state = get();
+        return state.currentPage[chatroomId] || 1;
       },
       
       loadMoreMessages: (chatroomId: string) => {
