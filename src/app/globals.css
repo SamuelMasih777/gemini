@@ -1,26 +1,142 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Gemini-inspired color palette - HSL format */
+    --primary: 217 91% 60%;
+    --primary-dark: 217 91% 50%;
+    --primary-light: 217 91% 70%;
+    --primary-glow: 217 91% 85%;
+    
+    --secondary: 142 76% 36%;
+    --secondary-dark: 142 76% 26%;
+    
+    --accent: 45 93% 47%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(142 76% 36%));
+    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 36%), hsl(45 93% 47%));
+    --gradient-chat: linear-gradient(180deg, hsl(220 13% 96%), hsl(220 13% 100%));
+    
+    /* Base UI colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91% 60%;
+    
+    /* Chat-specific colors */
+    --chat-user-bg: 217 91% 95%;
+    --chat-ai-bg: 0 0% 98%;
+    --chat-input-bg: 0 0% 100%;
+    
+    /* Status colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --success: 142 76% 36%;
+    --warning: 45 93% 47%;
+    --info: 217 91% 60%;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-elegant: 0 10px 30px -10px hsl(217 91% 60% / 0.3);
+    --shadow-glow: 0 0 40px hsl(217 91% 85% / 0.4);
+    
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217 91% 60%;
+    --primary-dark: 217 91% 50%;
+    --primary-light: 217 91% 70%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217 91% 60%;
+    
+    --gradient-chat: linear-gradient(180deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 12%));
+    
+    --chat-user-bg: 217 91% 15%;
+    --chat-ai-bg: 217.2 32.6% 17.5%;
+    --chat-input-bg: 217.2 32.6% 17.5%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Typing indicator animation */
+@keyframes bounce-dot {
+  0%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+}
+
+.bounce-dot {
+  animation: bounce-dot 1.4s infinite;
+}
+
+.bounce-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.bounce-dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
